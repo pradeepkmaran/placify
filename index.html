@@ -14,14 +14,17 @@
 
         function onSignIn(googleUser) {
             var profile = googleUser.getBasicProfile();
-            alert('ID: ' + profile.getId()); // Do not send to your backend! Use an ID token instead.
-            alert('Name: ' + profile.getName());
-            alert('Image URL: ' + profile.getImageUrl());
-            alert('Email: ' + profile.getEmail()); // This is null if the 'email' scope is not present.
+            var output = 'ID: ' + profile.getId() + '<br>' +
+                        'Name: ' + profile.getName() + '<br>' +
+                        'Image URL: ' + profile.getImageUrl() + '<br>' +
+                        'Email: ' + profile.getEmail();
+            // Write to the document
+            document.getElementById('profileInfo').innerHTML = output;
         }
     </script>
 </head>
 <body>
     <div class="g-signin2" data-onsuccess="onSignIn"></div>
+    <div class="profileInfo">Hi</div>
 </body>
 </html>
