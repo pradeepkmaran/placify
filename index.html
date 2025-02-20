@@ -5,14 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="google-signin-client_id" content="691252417890-9n65khc8j3ih6281opl41fp7ga9rf2m4.apps.googleusercontent.com">
     <title>Placify</title>
-    <script src="https://apis.google.com/js/platform.js?onload=onLoadCallback" async defer></script>
+    <script src="https://apis.google.com/js/platform.js" async defer></script>
     <script>
 
-        window.onLoadCallback = function(){
-        gapi.auth2.init({
-                client_id: '691252417890-9n65khc8j3ih6281opl41fp7ga9rf2m4.apps.googleusercontent.com'
-            });
-        }
+        gapi.load('auth2', () => {
+            gapi.auth2.init();
+        });
 
         function onSignIn(googleUser) {
             var profile = googleUser.getBasicProfile();
