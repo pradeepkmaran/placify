@@ -1,4 +1,4 @@
-// app.js - Main application file
+
 const express = require('express');
 const session = require('express-session');
 const passport = require('passport');
@@ -9,7 +9,6 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Configure session middleware
 app.use(session({
   secret: process.env.SESSION_SECRET || 'your_session_secret',
   resave: false,
@@ -17,11 +16,9 @@ app.use(session({
   cookie: { secure: process.env.NODE_ENV === 'production', maxAge: 24 * 60 * 60 * 1000 }
 }));
 
-// Initialize Passport
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Configure Google Strategy
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
@@ -33,7 +30,7 @@ passport.use(new GoogleStrategy({
     ]
   },
   function(accessToken, refreshToken, profile, done) {
-    // Save tokens to user session
+
     const user = {
       id: profile.id,
       email: profile.emails[0].value,
@@ -45,17 +42,14 @@ passport.use(new GoogleStrategy({
   }
 ));
 
-// Serialize user into session
 passport.serializeUser((user, done) => {
   done(null, user);
 });
 
-// Deserialize user from session
 passport.deserializeUser((obj, done) => {
   done(null, obj);
 });
 
-// Home route
 app.get('/', (req, res) => {
   if (req.isAuthenticated()) {
     res.send(`
@@ -71,7 +65,6 @@ app.get('/', (req, res) => {
   }
 });
 
-// Google Auth routes
 app.get('/auth/google', 
   passport.authenticate('google')
 );
@@ -90,7 +83,6 @@ app.get('/auth/logout', (req, res) => {
   });
 });
 
-// Middleware to check if user is authenticated
 function isAuthenticated(req, res, next) {
   if (req.isAuthenticated()) {
     return next();
@@ -98,7 +90,6 @@ function isAuthenticated(req, res, next) {
   res.redirect('/');
 }
 
-// Google Drive routes
 app.get('/drive/list', isAuthenticated, async (req, res) => {
   try {
     const oauth2Client = new google.auth.OAuth2();
@@ -135,7 +126,6 @@ app.get('/drive/list', isAuthenticated, async (req, res) => {
   }
 });
 
-// Start the server
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
