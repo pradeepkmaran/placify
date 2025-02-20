@@ -31,8 +31,10 @@
     
     <!-- Initialize Google API after page loads -->
     <script>
+        console.log("hiii");
         window.onload = function() {
             if (typeof gapi !== 'undefined') {
+                console.log("hiii");
                 init();
             } else {
                 // If gapi isn't loaded yet, wait for it
