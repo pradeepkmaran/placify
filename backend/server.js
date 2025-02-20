@@ -4,10 +4,21 @@ const session = require('express-session');
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const { google } = require('googleapis');
+const cors = require('cors');
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Configure CORS
+const corsOptions = {
+  origin: process.env.FRONTEND_URL || '*', // Allow requests from your frontend URL
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  credentials: true, // Allow cookies to be sent with requests
+  optionsSuccessStatus: 204
+};
+
+app.use(cors(corsOptions));
 
 app.use(session({
   secret: process.env.SESSION_SECRET || 'your_session_secret',
