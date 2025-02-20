@@ -14,14 +14,17 @@
                         'Image URL: ' + profile.getImageUrl() + '<br>' +
                         'Email: ' + profile.getEmail();
             // Write to the document
+            console.log(output);
             document.getElementById('profileInfo').innerHTML = output;
         }
 
         // Wait for the Google API to load
         function init() {
+            console.log("init start");
             gapi.load('auth2', function() {
                 gapi.auth2.init();
             });
+            console.log("init end");
         }
     </script>
 </head>
