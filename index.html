@@ -7,11 +7,6 @@
     <title>Placify</title>
     <script src="https://apis.google.com/js/platform.js" async defer></script>
     <script>
-
-        gapi.load('auth2', () => {
-            gapi.auth2.init();
-        });
-
         function onSignIn(googleUser) {
             var profile = googleUser.getBasicProfile();
             var output = 'ID: ' + profile.getId() + '<br>' +
@@ -21,10 +16,35 @@
             // Write to the document
             document.getElementById('profileInfo').innerHTML = output;
         }
+
+        // Wait for the Google API to load
+        function init() {
+            gapi.load('auth2', function() {
+                gapi.auth2.init();
+            });
+        }
     </script>
 </head>
 <body>
     <div class="g-signin2" data-onsuccess="onSignIn"></div>
     <div id="profileInfo">Hi</div>
+    
+    <!-- Initialize Google API after page loads -->
+    <script>
+        window.onload = function() {
+            if (typeof gapi !== 'undefined') {
+                init();
+            } else {
+                // If gapi isn't loaded yet, wait for it
+                setTimeout(function checkGapi() {
+                    if (typeof gapi !== 'undefined') {
+                        init();
+                    } else {
+                        setTimeout(checkGapi, 100);
+                    }
+                }, 100);
+            }
+        }
+    </script>
 </body>
 </html>
