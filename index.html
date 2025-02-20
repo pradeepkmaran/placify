@@ -14,10 +14,10 @@
 
         function onSignIn(googleUser) {
             var profile = googleUser.getBasicProfile();
-            document.write('ID: ' + profile.getId()); // Do not send to your backend! Use an ID token instead.
-            document.write('Name: ' + profile.getName());
-            document.write('Image URL: ' + profile.getImageUrl());
-            document.write('Email: ' + profile.getEmail()); // This is null if the 'email' scope is not present.
+            alert('ID: ' + profile.getId()); // Do not send to your backend! Use an ID token instead.
+            alert('Name: ' + profile.getName());
+            alert('Image URL: ' + profile.getImageUrl());
+            alert('Email: ' + profile.getEmail()); // This is null if the 'email' scope is not present.
         }
     </script>
 </head>
