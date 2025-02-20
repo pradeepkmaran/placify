@@ -4,6 +4,7 @@ const session = require('express-session');
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const { google } = require('googleapis');
+const OAuth2Strategy = require('passport-oauth2');
 const cors = require('cors');
 require('dotenv').config();
 
@@ -30,26 +31,15 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
-passport.use(new GoogleStrategy({
+passport.use(new OAuth2Strategy({
+    authorizationURL: 'https://accounts.google.com/o/oauth2/auth',
+    tokenURL: 'https://oauth2.googleapis.com/token',
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL: "/auth/google/callback",
-    scope: [
-      'profile', 
-      'email',
-      'https://www.googleapis.com/auth/drive.readonly'
-    ]
+    callbackURL: 'https://placify-ssn.vercel.app/auth/google/callback'
   },
   function(accessToken, refreshToken, profile, done) {
-
-    const user = {
-      id: profile.id,
-      email: profile.emails[0].value,
-      name: profile.displayName,
-      accessToken,
-      refreshToken
-    };
-    return done(null, user);
+    done(null, profile);
   }
 ));
 
