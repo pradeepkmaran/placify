@@ -1,141 +1,91 @@
 const express = require('express');
-const session = require('express-session');
-const passport = require('passport');
-const GoogleStrategy = require('passport-google-oauth20').Strategy;
+const multer  = require('multer');
+const fs = require('fs');
+const path = require('path');
 const { google } = require('googleapis');
-const cors = require('cors');
-require('dotenv').config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const port = process.env.PORT || 3000;
 
-// Configure CORS
-const corsOptions = {
-  origin: process.env.FRONTEND_URL || '*', // Allow requests from your frontend URL
-  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-  credentials: true, // Allow cookies to be sent with requests
-  optionsSuccessStatus: 204
-};
-
-app.use(cors(corsOptions));
-
-app.use(session({
-  secret: process.env.SESSION_SECRET || 'your_session_secret',
-  resave: false,
-  saveUninitialized: true,
-  cookie: { secure: process.env.NODE_ENV === 'production', maxAge: 24 * 60 * 60 * 1000 }
-}));
-
-app.use(passport.initialize());
-app.use(passport.session());
-
-passport.use(new GoogleStrategy({
-    clientID: process.env.GOOGLE_CLIENT_ID,
-    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL: "/auth/google/callback",
-    scope: [
-      'profile', 
-      'email',
-      'https://www.googleapis.com/auth/drive.readonly'
-    ]
-  },
-  function(accessToken, refreshToken, profile, done) {
-
-    const user = {
-      id: profile.id,
-      email: profile.emails[0].value,
-      name: profile.displayName,
-      accessToken,
-      refreshToken
-    };
-    return done(null, user);
-  }
-));
-
-passport.serializeUser((user, done) => {
-  done(null, user);
-});
-
-passport.deserializeUser((obj, done) => {
-  done(null, obj);
-});
-
-app.get('/', (req, res) => {
-  if (req.isAuthenticated()) {
-    res.send(`
-      <h1>Welcome, ${req.user.name}</h1>
-      <a href="/drive/list">View your Google Drive files</a><br>
-      <a href="/auth/logout">Logout</a>
-    `);
-  } else {
-    res.send(`
-      <h1>Google Drive Integration</h1>
-      <a href="/auth/google">Login with Google</a>
-    `);
-  }
-});
-
-app.get('/auth/google', 
-  passport.authenticate('google')
-);
-
-app.get('/auth/google/callback', 
-  passport.authenticate('google', { failureRedirect: '/' }),
-  (req, res) => {
-    res.redirect('/');
-  }
-);
-
-app.get('/auth/logout', (req, res) => {
-  req.logout(function(err) {
-    if (err) { return next(err); }
-    res.redirect('/');
-  });
-});
-
-function isAuthenticated(req, res, next) {
-  if (req.isAuthenticated()) {
-    return next();
-  }
-  res.redirect('/');
+const uploadsDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir);
 }
 
-app.get('/drive/list', isAuthenticated, async (req, res) => {
-  try {
-    const oauth2Client = new google.auth.OAuth2();
-    oauth2Client.setCredentials({
-      access_token: req.user.accessToken,
-      refresh_token: req.user.refreshToken
-    });
+const apikeys = require('./apikeys.json');
+const SCOPE = ['https://www.googleapis.com/auth/drive'];
 
-    const drive = google.drive({ version: 'v3', auth: oauth2Client });
-    
-    const response = await drive.files.list({
-      pageSize: 10,
-      fields: 'files(id, name, mimeType, webViewLink)',
-    });
-
-    const files = response.data.files;
-    if (files.length === 0) {
-      res.send('No files found in your Google Drive.');
-      return;
-    }
-
-    let filesList = '<h1>Your Google Drive Files</h1>';
-    filesList += '<ul>';
-    files.forEach(file => {
-      filesList += `<li><a href="${file.webViewLink}" target="_blank">${file.name}</a> (${file.mimeType})</li>`;
-    });
-    filesList += '</ul>';
-    filesList += '<a href="/">Back to Home</a>';
-
-    res.send(filesList);
-  } catch (error) {
-    console.error('Error fetching Google Drive files:', error);
-    res.status(500).send('Error fetching your Google Drive files');
+const storage = multer.diskStorage({
+  destination: function(req, file, cb) {
+    cb(null, uploadsDir);
+  },
+  filename: function(req, file, cb) {
+    cb(null, Date.now() + '-' + file.originalname);
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+const upload = multer({ storage: storage });
+
+async function authorize() { // im just creating jwt using the service account instead of user account
+  const jwtClient = new google.auth.JWT(
+    apikeys.client_email,
+    null,
+    apikeys.private_key,
+    SCOPE
+  );
+  await jwtClient.authorize();
+  return jwtClient;
+}
+
+async function uploadFile(authClient, filePath, fileName) {
+  return new Promise((resolve, reject) => {
+    const drive = google.drive({ version: 'v3', auth: authClient });
+    const fileMetaData = {
+      name: fileName,
+      parents: [process.env.DRIVE_FOLDER]
+    };
+
+    drive.files.create({
+      resource: fileMetaData,
+      media: {
+        body: fs.createReadStream(filePath),
+        mimeType: 'application/octet-stream'
+      },
+      fields: 'id'
+    }, (error, file) => {
+      if (error) {
+        return reject(error);
+      }
+      resolve(file);
+    });
+    console.log("FILE UPLOADED SUCCESSFULLY. FILE: "+ fileMetaData.name)
+  });
+}
+
+app.post('/upload', upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: 'No file uploaded' });
+    }
+
+    const filePath = req.file.path;
+    const fileName = req.file.originalname;
+    
+    const authClient = await authorize();
+    const driveFile = await uploadFile(authClient, filePath, fileName);
+
+    fs.unlink(filePath, (err) => {
+      if (err) console.error('Error removing temporary file:', err);
+    });
+
+    console.log("FILE UPLOADED SUCCESSFULLY. FILE ID: " + driveFile.data.id);
+    res.json({ success: true, fileId: driveFile.data.id });
+  } catch (error) {
+    console.error("Error in /upload:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+app.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
 });
