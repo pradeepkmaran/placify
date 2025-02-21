@@ -13,7 +13,7 @@ if (!fs.existsSync(uploadsDir)) {
 }
 
 
-const apikeys = JSON.parse(process.env.API_KEY)
+const apikeys = JSON.parse(serviceAccountKey.replace(/\\n/g, '\n'));
 const SCOPE = ['https://www.googleapis.com/auth/drive'];
 
 const storage = multer.diskStorage({
