@@ -12,8 +12,7 @@ if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
-
-const apikeys = JSON.parse(process.env.API_KEY.replace(/\\n/g, '\n'));
+// const apikeys = JSON.parse(JSON.stringify(process.env.API_KEY));
 const SCOPE = ['https://www.googleapis.com/auth/drive'];
 
 const storage = multer.diskStorage({
@@ -29,9 +28,9 @@ const upload = multer({ storage: storage });
 
 async function authorize() { // im just creating jwt using the service account instead of user account
   const jwtClient = new google.auth.JWT(
-    apikeys.client_email,
+    process.env.API_KEY_CLIENT_EMAIL,
     null,
-    apikeys.private_key,
+    process.env.API_KEY_PRIVATE_KEY,
     SCOPE
   );
   await jwtClient.authorize();
