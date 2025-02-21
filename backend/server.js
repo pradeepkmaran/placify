@@ -7,21 +7,22 @@ const { google } = require('googleapis');
 const app = express();
 const port = process.env.PORT || 3000;
 
-const uploadsDir = path.join(__dirname, 'uploads');
+const uploadsDir = path.join('/tmp', 'uploads');
 if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir);
+  fs.mkdirSync(uploadsDir, { recursive: true });
 }
+
 
 const apikeys = JSON.parse(process.env.API_KEY)
 const SCOPE = ['https://www.googleapis.com/auth/drive'];
 
 const storage = multer.diskStorage({
-  destination: function(req, file, cb) {
-    cb(null, uploadsDir);
-  },
-  filename: function(req, file, cb) {
-    cb(null, Date.now() + '-' + file.originalname);
-  }
+    destination: function(req, file, cb) {
+      cb(null, uploadsDir);
+    },
+    filename: function(req, file, cb) {
+      cb(null, Date.now() + '-' + file.originalname);
+    }
 });
 
 const upload = multer({ storage: storage });
