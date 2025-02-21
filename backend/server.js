@@ -3,6 +3,7 @@ const multer  = require('multer');
 const fs = require('fs');
 const path = require('path');
 const { google } = require('googleapis');
+require('dotenv').config();
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -12,7 +13,6 @@ if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
-// const apikeys = JSON.parse(JSON.stringify(process.env.API_KEY));
 const SCOPE = ['https://www.googleapis.com/auth/drive'];
 
 const storage = multer.diskStorage({
