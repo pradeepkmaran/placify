@@ -8,6 +8,8 @@ require('dotenv').config();
 const app = express();
 const port = process.env.PORT || 3000;
 
+const API_KEY = JSON.parse(Buffer.from(process.env.API_KEY, 'base64').toString('utf-8'));
+
 const uploadsDir = path.join('/tmp', 'uploads');
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
@@ -28,9 +30,9 @@ const upload = multer({ storage: storage });
 
 async function authorize() { // im just creating jwt using the service account instead of user account
   const jwtClient = new google.auth.JWT(
-    process.env.API_KEY_CLIENT_EMAIL,
+    API_KEY.client_email,
     null,
-    process.env.API_KEY_PRIVATE_KEY.replace(/\\n/gm, "\n"),
+    API_KEY.private_key,
     SCOPE
   );
   await jwtClient.authorize();
