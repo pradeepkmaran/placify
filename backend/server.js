@@ -8,6 +8,9 @@ require('dotenv').config();
 const app = express();
 const port = process.env.PORT || 3000;
 
+const cors = require('cors');
+app.use(cors());
+
 const API_KEY = JSON.parse(Buffer.from(process.env.API_KEY, 'base64').toString('utf-8'));
 
 const uploadsDir = path.join('/tmp', 'uploads');
