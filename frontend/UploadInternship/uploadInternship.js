@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     })
     .then(() => {
-      window.location.href = "/frontend/Home/home.html";
+      window.location.href = "/Home/home.html";
     })
     .catch(err => {
       console.error("Error uploading internship details:", err);

@@ -9,7 +9,7 @@ document.addEventListener("DOMContentLoaded", () => {
     signInWithPopup(auth, provider)
       .then((data) => {
         localStorage.setItem("email", data.user.email);
-        window.location.href = "/frontend/Home/home.html";
+        window.location.href = "/Home/home.html";
         // document.body.innerHTML += `<p>Signed in as: ${data.user.email}</p>`;
       })
       .catch((error) => {
