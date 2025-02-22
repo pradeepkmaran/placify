@@ -135,6 +135,35 @@ app.post('/api/student/upload', upload.array('files', 10), async (req, res) => {
   }
 });
 
+app.get('/api/faculty/view-internships', async (req, res) => {
+  try {
+    const authClient = await authorize();
+    const sheets = google.sheets({ version: 'v4', auth: authClient });
+
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: process.env.SHEET_ID,
+      range: `${process.env.SHEET_NAME}!A:F`,
+    });
+
+    const rows = response.data.values;
+    if (!rows || rows.length === 0) {
+      return res.json({ success: false, message: "No data found" });
+    }
+    const headers = rows[0];
+    const internships = rows.slice(1).map(row => {
+      let obj = {};
+      headers.forEach((header, index) => {
+        obj[header] = row[index] || "";
+      });
+      return obj;
+    });
+    return res.json({ success: true, internships });
+  } catch (error) {
+    console.error("Error fetching internships:", error);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
