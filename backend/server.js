@@ -30,7 +30,7 @@ async function authorize() { // im just creating jwt using the service account i
   const jwtClient = new google.auth.JWT(
     process.env.API_KEY_CLIENT_EMAIL,
     null,
-    process.env.API_KEY_PRIVATE_KEY,
+    process.env.API_KEY_PRIVATE_KEY.replace(/\\n/gm, "\n"),
     SCOPE
   );
   await jwtClient.authorize();
