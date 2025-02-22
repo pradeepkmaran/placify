@@ -1,0 +1,37 @@
+
+body {
+  font-family: Arial, sans-serif;
+  background: #f4f4f4;
+  margin: 0;
+  padding: 0;
+}
+header {
+  background: #007BFF;
+  color: #fff;
+  padding: 20px;
+  text-align: center;
+}
+nav {
+  background: #0056b3;
+  padding: 20px;
+  text-align: center;
+}
+nav a {
+  color: #fff;
+  text-decoration: none;
+  margin: 0 10px;
+  padding: 10px 15px;
+  background: #007BFF;
+  border-radius: 3px;
+}
+nav a:hover {
+  background: #0056b3;
+}
+.content {
+  max-width: 800px;
+  margin: 20px auto;
+  padding: 20px;
+  background: #fff;
+  border-radius: 5px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
