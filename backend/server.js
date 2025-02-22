@@ -39,6 +39,33 @@ async function authorize() { // im just creating jwt using the service account i
   return jwtClient;
 }
 
+async function appendToSheet(authClient, studentData) {
+  const sheets = google.sheets({ version: 'v4', auth: authClient });
+
+  const response = await sheets.spreadsheets.values.get({
+    spreadsheetId: process.env.SHEET_ID,
+    range: `${process.env.SHEET_NAME}!A:A`,
+  });
+
+  const nextSerialNo = response.data.values ? response.data.values.length : 1;
+
+  const { register_number, student_name, company_name, proofLinks } = studentData;
+
+  const values = [
+    [nextSerialNo, register_number, student_name, company_name, proofLinks[0] || '', proofLinks[1] || '']
+  ];
+
+  sheets.spreadsheets.values.append({
+    spreadsheetId: process.env.SHEET_ID,
+    range: `${process.env.SHEET_NAME}!A:F`,
+    valueInputOption: 'USER_ENTERED',
+    resource: { values },
+  });
+
+  console.log(`Appended data for ${student_name} to Google Sheets.`);
+}
+
+
 async function uploadFile(authClient, filePath, fileName) {
   return new Promise((resolve, reject) => {
     const drive = google.drive({ version: 'v3', auth: authClient });
@@ -64,24 +91,38 @@ async function uploadFile(authClient, filePath, fileName) {
   });
 }
 
-app.post('/api/student/upload', upload.single('file'), async (req, res) => {
+app.post('/api/student/upload', upload.array('files', 10), async (req, res) => {
   try {
-    if (!req.file) {
-      return res.status(400).json({ success: false, message: 'No file uploaded' });
+    if (!req.files || !req.body.register_number || !req.body.student_name || !req.body.company_name) {
+      return res.status(400).json({ success: false, message: 'Data Missing' });
     }
 
-    const filePath = req.file.path;
-    const fileName = req.file.originalname;
-    
+    const { register_number, student_name, company_name } = req.body;
     const authClient = await authorize();
-    const driveFile = await uploadFile(authClient, filePath, fileName);
+    const uploadedFiles = [];;
+    const proofLinks = [];
 
-    fs.unlink(filePath, (err) => {
-      if (err) console.error('Error removing temporary file:', err);
-    });
+    for (const file of req.files) {
+      const fileExtension = path.extname(file.originalname);
+      const newFileName = `${register_number}_${student_name}_${company_name}_${file.originalname}.${fileExtension}`;
+      const newFilePath = path.join(path.dirname(file.path), newFileName);
 
-    console.log("FILE UPLOADED SUCCESSFULLY. FILE ID: " + driveFile.data.id);
-    res.json({ success: true, fileId: driveFile.data.id });
+      fs.renameSync(file.path, newFilePath);
+
+      const driveFile = await uploadFile(authClient, newFilePath, newFileName);
+      uploadedFiles.push({ fileName: newFileName, fileId: driveFile.data.id });
+      proofLinks.push(`https://drive.google.com/file/d/${driveFile.data.id}/view?usp=sharing`);
+
+      fs.unlink(newFilePath, (err) => {
+        if (err) console.error('Error removing temporary file:', err);
+      });
+    }
+
+    await appendToSheet(authClient, { register_number, student_name, company_name, proofLinks });
+
+    console.log("FILES UPLOADED SUCCESSFULLY:", uploadedFiles);
+    res.json({ success: true, files: uploadedFiles });
+
   } catch (error) {
     console.error("Error in /upload:", error);
     res.status(500).json({ success: false, message: error.message });
