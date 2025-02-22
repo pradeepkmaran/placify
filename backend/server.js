@@ -64,6 +64,7 @@ async function uploadFile(authClient, filePath, fileName) {
 
 app.post('/upload', upload.single('file'), async (req, res) => {
   try {
+    console.log(process.env.API_KEY_PRIVATE_KEY);
     if (!req.file) {
       return res.status(400).json({ success: false, message: 'No file uploaded' });
     }
